@@ -54,7 +54,7 @@ To report a bug, request a feature, or share feedback, please post in the [Shopi
 
 We triage in the forums, not in this repo. PRs and issues here are closed without review.
 
-For more details see [CONTRIBUTING.md](https://github.com/Shopify/shopify-app-php/blob/main/CONTRIBUTING.md).`
+For more details see [CONTRIBUTING.md](https://github.com/Shopify/shopify-app-php?tab=contributing-ov-file).`
             });
 
             // Close the PR
