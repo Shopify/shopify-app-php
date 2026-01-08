@@ -7,4 +7,4 @@ Do this instead:
 - Cancel this PR.
 - Report bugs, request features, or share feedback in the [Shopify dev community forums](https://community.shopify.dev/c/shopify-cli-libraries/14)
 
-For more details see [CONTRIBUTING.md](https://github.com/Shopify/shopify-app-php/blob/main/CONTRIBUTING.md).
+For more details see [CONTRIBUTING.md](https://github.com/Shopify/shopify-app-php?tab=contributing-ov-file).
