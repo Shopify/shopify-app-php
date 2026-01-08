@@ -1,0 +1,68 @@
+name: Close External PRs
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close-external-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if PR author is from Shopify
+        id: check-author
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const author = context.payload.pull_request.user.login;
+
+            try {
+              // Check if the author is a member of the Shopify organization
+              await github.rest.orgs.checkMembershipForUser({
+                org: 'Shopify',
+                username: author
+              });
+
+              console.log(`${author} is a Shopify member`);
+              core.setOutput('is-shopify', 'true');
+            } catch (error) {
+              if (error && error.status === 404) {
+                console.log(`${author} is not a Shopify member`);
+              } else {
+                console.log(`Error checking Shopify membership for ${author}: ${error}`);
+              }
+              core.setOutput('is-shopify', 'false');
+            }
+
+      - name: Close PR and comment
+        if: steps.check-author.outputs.is-shopify == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            // Add comment to PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `Thanks for your interest. This repository does not accept contributions, so we've closed this PR.
+
+To report a bug, request a feature, or share feedback, please post in the [Shopify dev community forums](https://community.shopify.dev/c/shopify-cli-libraries/14)
+
+We triage in the forums, not in this repo. PRs and issues here are closed without review.
+
+For more details see [CONTRIBUTING.md](https://github.com/Shopify/shopify-app-php/blob/main/CONTRIBUTING.md).`
+            });
+
+            // Close the PR
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              state: 'closed'
+            });
+
+            console.log(`Closed PR #${prNumber} from external contributor`);
