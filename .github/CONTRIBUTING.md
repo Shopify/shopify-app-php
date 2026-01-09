@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest. This repository is a read-only mirror of a private repository. We don't accept contributions here.
+Thanks for your interest but we don't accept pull requests. Any pull requests will be automatically closed.
 
 To report a bug, request a feature, or share feedback, create a post in the [Shopify dev community forums](https://community.shopify.dev/c/shopify-cli-libraries/14)
 
@@ -15,7 +15,3 @@ When you start a topic, include:
 - Screenshots or code snippets, if they help explain the issue
 
 We monitor the forums and use them to triage, prioritize, and discuss work. Posts there reach the right people faster, and keep the conversation in one place.
-
-## Pull requests and issues
-
-Any pull requests opened in this repository will be automatically closed.
