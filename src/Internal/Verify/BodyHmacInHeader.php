@@ -15,7 +15,8 @@ use Shopify\App\Types\ResponseInfo;
  *
  * This class provides the core HMAC verification logic used by both
  * webhook and flow action request verification, where the HMAC signature
- * of the request body is provided in the X-Shopify-Hmac-SHA256 header.
+ * of the request body is provided by the X-Shopify-Hmac-SHA256 or shopify-hmac-sha256 header.
+ * The shop domain is provided by the X-Shopify-Shop-Domain or shopify-shop-domain header.
  *
  * @internal This class is not part of the public API and may change without notice.
  */
@@ -27,10 +28,17 @@ class BodyHmacInHeader
      * @param array $req The request object containing method, headers, and body
      * @param array $config The app configuration with clientSecret
      * @param string $requestType The type of request for log messages (e.g., "Webhook", "Flow action")
+     * @param list<string> $hmacHeaderNames Header names to check for HMAC (first present is used)
+     * @param list<string> $shopHeaderNames Header names to check for shop domain (first present is used)
      * @return ResultForReq Verification result with ok, shop, log, and response fields
      */
-    public static function verify(array $req, array $config, string $requestType): ResultForReq
-    {
+    public static function verify(
+        array $req,
+        array $config,
+        string $requestType,
+        array $hmacHeaderNames,
+        array $shopHeaderNames
+    ): ResultForReq {
         // Validate request object
         $method = $req['method'] ?? null;
         if (!is_string($method) || $method === '') {
@@ -110,14 +118,17 @@ class BodyHmacInHeader
         // Normalize headers for case-insensitive comparison
         $normalizedHeaders = Headers::normalize($headers);
 
+        // Resolve HMAC and shop from configurable header names (first present wins)
+        [$receivedHmac] = self::firstHeaderValueAndName($normalizedHeaders, $hmacHeaderNames);
+
         // Check for HMAC header first (most important for security)
-        if (!isset($normalizedHeaders['x-shopify-hmac-sha256'])) {
+        if ($receivedHmac === '') {
             return new ResultForReq(
                 ok: false,
                 shop: null,
                 log: new LogWithReq(
                     code: 'missing_hmac_header',
-                    detail: 'Required `X-Shopify-Hmac-SHA256` header is missing. Respond 400 Bad Request using the provided response.',
+                    detail: "Required hmac header is missing. Respond 400 Bad Request using the provided response.",
                     req: Request::normalizeForLog($req)
                 ),
                 response: new ResponseInfo(
@@ -129,7 +140,6 @@ class BodyHmacInHeader
         }
 
         // HMAC validation
-        $receivedHmac = $normalizedHeaders['x-shopify-hmac-sha256'] ?? '';
 
         // Try current secret first
         $calculatedHmac = base64_encode(hash_hmac('sha256', $body, $clientSecret, true));
@@ -147,7 +157,7 @@ class BodyHmacInHeader
                 shop: null,
                 log: new LogWithReq(
                     code: 'invalid_hmac',
-                    detail: '`X-Shopify-Hmac-SHA256` header value does not match the body\'s HMAC. Respond 401 Unauthorized using the provided response.',
+                    detail: "hmac header value does not match the body's HMAC. Respond 401 Unauthorized using the provided response.",
                     req: Request::normalizeForLog($req)
                 ),
                 response: new ResponseInfo(
@@ -158,8 +168,8 @@ class BodyHmacInHeader
             );
         }
 
-        // Extract shop from header
-        $shopDomain = $normalizedHeaders['x-shopify-shop-domain'] ?? '';
+        // Extract shop from header (first configured name present)
+        [$shopDomain] = self::firstHeaderValueAndName($normalizedHeaders, $shopHeaderNames);
         // Extract shop by removing .myshopify.com suffix
         $shop = str_replace('.myshopify.com', '', $shopDomain);
 
@@ -177,5 +187,21 @@ class BodyHmacInHeader
                 headers: (object)[]
             )
         );
+    }
+
+    /**
+     * @param array<string, string> $normalizedHeaders
+     * @param list<string> $names
+     * @return array{0: string, 1: string} [value, matchedKey]
+     */
+    private static function firstHeaderValueAndName(array $normalizedHeaders, array $names): array
+    {
+        foreach ($names as $name) {
+            $key = strtolower($name);
+            if (isset($normalizedHeaders[$key])) {
+                return [$normalizedHeaders[$key], $key];
+            }
+        }
+        return ['', ''];
     }
 }

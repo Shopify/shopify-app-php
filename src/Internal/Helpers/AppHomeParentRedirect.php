@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopify\App\Internal\Helpers;
 
 use Shopify\App\Internal\Utils\Headers;
+use Shopify\App\Internal\Utils\Encoding;
 use Shopify\App\Internal\Utils\Request;
 use Shopify\App\Types\ResultForReq;
 use Shopify\App\Types\LogWithReq;
@@ -161,8 +162,8 @@ class AppHomeParentRedirect
 
         // JSON encode URL and target for safe embedding in JavaScript
         // JSON_HEX_TAG escapes < and > as \u003C and \u003E to prevent XSS
-        $encodedUrl = self::jsonEncodeForJs($processedRedirectUrl);
-        $encodedTarget = self::jsonEncodeForJs($target);
+        $encodedUrl = Encoding::jsonEncodeForJs($processedRedirectUrl);
+        $encodedTarget = Encoding::jsonEncodeForJs($target);
 
         // Document request - return HTML response with App Bridge
         $html = '<script data-api-key="' . $clientId . '" src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>';
@@ -186,19 +187,6 @@ class AppHomeParentRedirect
                 ]
             )
         );
-    }
-
-    /**
-     * JSON encode a string for safe embedding in JavaScript.
-     * Uses JSON_HEX_TAG to escape < and > as unicode escapes to prevent XSS.
-     * Uses JSON_UNESCAPED_SLASHES to preserve forward slashes as-is.
-     *
-     * @param string $value The value to encode
-     * @return string The JSON-encoded string (including surrounding quotes)
-     */
-    private static function jsonEncodeForJs(string $value): string
-    {
-        return json_encode($value, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES);
     }
 
     /**

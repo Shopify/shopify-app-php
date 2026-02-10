@@ -21,34 +21,40 @@ use Shopify\App\Types\ResponseInfo;
 class AppHomeReq
 {
     /**
+     * Remove a query parameter from a raw query string.
+     *
+     * Operates on the raw query string with a regex rather than parsing into
+     * native data structures. This avoids the destructive transformations that
+     * parse_str() applies (e.g. converting bracket-notation keys like ids[0]
+     * into nested arrays) and preserves the original encoding exactly.
+     *
+     * @param string $query Raw query string without leading '?'
+     * @param string $param Parameter name to remove
+     * @return string Query string with the parameter removed
+     */
+    private static function removeQueryParam(string $query, string $param): string
+    {
+        $cleaned = preg_replace('/(?:^|&)' . preg_quote($param, '/') . '=[^&]*/', '', $query);
+        return ltrim($cleaned, '&');
+    }
+
+    /**
      * Build app home patch id token page redirect response.
      *
      * @param array $urlParts Parsed URL components from parse_url()
      * @param string $path Request path
-     * @param array $queryParams Query parameters
+     * @param string $rawQuery Raw query string (without leading '?')
      * @param string $appHomePatchIdTokenPath Path to the patch id token page
      * @return ResultWithExchangeableIdToken Redirect response with 302 status and Location header
      */
-    private static function buildPatchIdTokenRedirect(array $urlParts, string $path, array $queryParams, string $appHomePatchIdTokenPath, array $req): ResultWithExchangeableIdToken
+    private static function buildPatchIdTokenRedirect(array $urlParts, string $path, string $rawQuery, string $appHomePatchIdTokenPath, array $req): ResultWithExchangeableIdToken
     {
-        $cleanParams = $queryParams;
-        unset($cleanParams['id_token']);
-
-        // Build reload path with query string (preserve base64 = padding)
-        $reloadParts = [];
-        foreach ($cleanParams as $key => $value) {
-            $reloadParts[] = $key . '=' . $value;
-        }
-        $reloadQuery = implode('&', $reloadParts);
-        $reloadPath = $path . ($reloadQuery ? '?' . $reloadQuery : '');
+        $cleanQuery = self::removeQueryParam($rawQuery, 'id_token');
+        $reloadPath = $path . ($cleanQuery ? '?' . $cleanQuery : '');
 
         // Build patch id token URL with shopify-reload parameter
-        $patchIdTokenQueryParts = [];
-        foreach ($cleanParams as $key => $value) {
-            $patchIdTokenQueryParts[] = $key . '=' . $value;
-        }
-        $patchIdTokenQueryParts[] = 'shopify-reload=' . rawurlencode($reloadPath);
-        $patchIdTokenQuery = implode('&', $patchIdTokenQueryParts);
+        $shopifyReload = 'shopify-reload=' . rawurlencode($reloadPath);
+        $patchIdTokenQuery = $cleanQuery ? $cleanQuery . '&' . $shopifyReload : $shopifyReload;
 
         $patchIdTokenLocation = $urlParts['scheme'] . '://' . $urlParts['host'] . $appHomePatchIdTokenPath . '?' . $patchIdTokenQuery;
 
@@ -184,7 +190,7 @@ class AppHomeReq
 
             // If no id_token, redirect to patch ID token page
             if (empty($idTokenParam)) {
-                return self::buildPatchIdTokenRedirect($urlParts, $path, $queryParams, $appHomePatchIdTokenPath, $req);
+                return self::buildPatchIdTokenRedirect($urlParts, $path, $query, $appHomePatchIdTokenPath, $req);
             }
 
             $idToken = $idTokenParam;
@@ -258,7 +264,7 @@ class AppHomeReq
         if ($payload === null) {
             // For document requests with invalid/stale tokens, redirect to patch ID token page
             if (!$hasAuthorizationHeader) {
-                return self::buildPatchIdTokenRedirect($urlParts, $path, $queryParams, $appHomePatchIdTokenPath, $req);
+                return self::buildPatchIdTokenRedirect($urlParts, $path, $query, $appHomePatchIdTokenPath, $req);
             }
 
             $errorCode = 'invalid_id_token';
@@ -341,22 +347,11 @@ class AppHomeReq
         $newIdTokenResponse = null;
         if (!$hasAuthorizationHeader) {
             // Document request - build patch ID token URL
-            $cleanParams = $queryParams;
-            unset($cleanParams['id_token']);
+            $cleanQuery = self::removeQueryParam($query, 'id_token');
+            $reloadPath = $path . ($cleanQuery ? '?' . $cleanQuery : '');
 
-            $reloadParts = [];
-            foreach ($cleanParams as $key => $value) {
-                $reloadParts[] = $key . '=' . $value;
-            }
-            $reloadQuery = implode('&', $reloadParts);
-            $reloadPath = $path . ($reloadQuery ? '?' . $reloadQuery : '');
-
-            $patchIdTokenQueryParts = [];
-            foreach ($cleanParams as $key => $value) {
-                $patchIdTokenQueryParts[] = $key . '=' . $value;
-            }
-            $patchIdTokenQueryParts[] = 'shopify-reload=' . rawurlencode($reloadPath);
-            $patchIdTokenQuery = implode('&', $patchIdTokenQueryParts);
+            $shopifyReload = 'shopify-reload=' . rawurlencode($reloadPath);
+            $patchIdTokenQuery = $cleanQuery ? $cleanQuery . '&' . $shopifyReload : $shopifyReload;
 
             $patchIdTokenLocation = $urlParts['scheme'] . '://' . $urlParts['host'] . $appHomePatchIdTokenPath . '?' . $patchIdTokenQuery;
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopify\App\Internal\Helpers;
 
 use Shopify\App\Internal\Utils\Headers;
+use Shopify\App\Internal\Utils\Encoding;
 use Shopify\App\Internal\Utils\Request;
 use Shopify\App\Types\ResultForReq;
 use Shopify\App\Types\LogWithReq;
@@ -104,8 +105,10 @@ class AppHomeRedirect
         // Determine response based on request type
         if ($hasAuthHeader && $hasBounceHeader) {
             // Bounce request - return HTML response with App Bridge using _self
+            // JSON encode URL for safe embedding in JavaScript to prevent XSS
+            $encodedUrl = Encoding::jsonEncodeForJs($mergedUrl);
             $html = '<script data-api-key="' . $clientId . '" src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>';
-            $html .= "<script>window.open('{$mergedUrl}', '_self');</script>";
+            $html .= "<script>window.open({$encodedUrl}, \"_self\");</script>";
 
             return new ResultForReq(
                 ok: true,
