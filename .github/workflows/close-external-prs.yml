@@ -16,25 +16,10 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const author = context.payload.pull_request.user.login;
-
-            try {
-              // Check if the author is a member of the Shopify organization
-              await github.rest.orgs.checkMembershipForUser({
-                org: 'Shopify',
-                username: author
-              });
-
-              console.log(`${author} is a Shopify member`);
-              core.setOutput('is-shopify', 'true');
-            } catch (error) {
-              if (error && error.status === 404) {
-                console.log(`${author} is not a Shopify member`);
-              } else {
-                console.log(`Error checking Shopify membership for ${author}: ${error}`);
-              }
-              core.setOutput('is-shopify', 'false');
-            }
+            const association = context.payload.pull_request.author_association;
+            const isInternal = ['MEMBER', 'OWNER', 'COLLABORATOR'].includes(association);
+            console.log(`${context.payload.pull_request.user.login} author_association: ${association}`);
+            core.setOutput('is-shopify', isInternal ? 'true' : 'false');
 
       - name: Close PR and comment
         if: steps.check-author.outputs.is-shopify == 'false'
