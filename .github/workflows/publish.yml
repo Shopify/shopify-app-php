@@ -54,6 +54,7 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           curl --silent --show-error --fail -X POST \
+            -H "Content-Type: application/json" \
             "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_API_TOKEN}" \
             -d '{"repository":{"url":"https://github.com/${{ github.repository }}"}}'
           echo "Packagist notified of ${TAG}"
