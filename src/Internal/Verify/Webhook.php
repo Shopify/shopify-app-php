@@ -12,8 +12,18 @@ use Shopify\App\Types\ResultForReq;
  */
 class Webhook
 {
+    /** Webhook and event header names (first present is used). */
+    private const HMAC_HEADER_NAMES = ['x-shopify-hmac-sha256', 'shopify-hmac-sha256'];
+    private const SHOP_HEADER_NAMES = ['x-shopify-shop-domain', 'shopify-shop-domain'];
+
     public static function verify(array $req, array $config): ResultForReq
     {
-        return BodyHmacInHeader::verify($req, $config, 'Webhook');
+        return BodyHmacInHeader::verify(
+            $req,
+            $config,
+            'Webhook',
+            self::HMAC_HEADER_NAMES,
+            self::SHOP_HEADER_NAMES
+        );
     }
 }

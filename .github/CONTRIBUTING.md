@@ -2,7 +2,7 @@
 
 Thanks for your interest but we don't accept pull requests. Any pull requests will be automatically closed.
 
-To report a bug, request a feature, or share feedback, create a post in the [Shopify dev community forums](https://community.shopify.dev/c/shopify-cli-libraries/14)
+To report a bug, request a feature, or share feedback, [create a post in the Shopify dev community forums](https://community.shopify.dev/new-topic?title=[Feedback%20for%20php%20package]&category=shopify-cli-libraries&tags=php-library&domain=PHP%20Library)
 
 ## How to post in the forums
 

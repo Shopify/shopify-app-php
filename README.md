@@ -765,7 +765,7 @@ Note: Client credentials tokens expire after 24 hours and do not include a refre
 
 This package does not accept contributions, but we'd love to hear your feedback.
 
-To report a bug, request a feature, or share feedback, post in the [Shopify dev community forums](https://community.shopify.dev/c/shopify-cli-libraries/14). Please don’t open pull requests or GitHub issues here; They will be closed automatically.
+To report a bug, request a feature, or share feedback, post in the [Shopify dev community forums](https://community.shopify.dev/new-topic?title=[Feedback%20for%20php%20package]&category=shopify-cli-libraries&tags=php-library&domain=PHP%20Library). Please don’t open pull requests or GitHub issues here; They will be closed automatically.
 
 We triage and discuss work in the forums. Please see [CONTRIBUTING.md](https://github.com/Shopify/shopify-app-php?tab=contributing-ov-file) for details.
 
