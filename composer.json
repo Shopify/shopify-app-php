@@ -20,7 +20,7 @@
   },
   "require": {
     "php": ">=8.2",
-    "firebase/php-jwt": "^6.0",
+    "firebase/php-jwt": "^6.0 || ^7.0",
     "guzzlehttp/guzzle": "^7.0"
   },
   "require-dev": {
