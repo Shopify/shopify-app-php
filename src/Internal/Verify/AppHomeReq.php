@@ -67,7 +67,7 @@ class AppHomeReq
             log: new LogWithReq(
                 code: 'redirect_to_patch_id_token_page',
                 detail: 'Embedded app without id_token. Redirect to the patch ID token page to obtain a new token using the provided response.',
-                req: Request::normalizeForLog($req)
+                req: Request::redactForLog($req)
             ),
             response: new ResponseInfo(
                 status: 302,
@@ -90,7 +90,7 @@ class AppHomeReq
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected appHomePatchIdTokenPath to be a non-empty string',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -110,7 +110,7 @@ class AppHomeReq
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: "Expected appHomePatchIdTokenPath to be a non-empty string, but got ''",
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -132,7 +132,7 @@ class AppHomeReq
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.url to be a non-empty string',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -153,7 +153,7 @@ class AppHomeReq
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.headers to be an object',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -205,7 +205,7 @@ class AppHomeReq
                     log: new LogWithReq(
                         code: 'invalid_id_token',
                         detail: 'ID token verification failed. Respond 401 Unauthorized using the provided response.',
-                        req: Request::normalizeForLog($req)
+                        req: Request::redactForLog($req)
                     ),
                     response: new ResponseInfo(
                         status: 401,
@@ -229,7 +229,7 @@ class AppHomeReq
                 log: new LogWithReq(
                     code: 'missing_authorization_and_id_token',
                     detail: 'Neither Authorization header nor id_token query parameter present. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -284,7 +284,7 @@ class AppHomeReq
                 log: new LogWithReq(
                     code: $errorCode,
                     detail: $detailMsg,
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -316,7 +316,7 @@ class AppHomeReq
                 log: new LogWithReq(
                     code: 'invalid_aud',
                     detail: 'ID token audience (aud) claim does not match clientId. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -386,7 +386,7 @@ class AppHomeReq
             log: new LogWithReq(
                 code: 'verified',
                 detail: 'App Home request verified. Proceed with business logic.' . (!$hasAuthorizationHeader ? '  Include the headers in the provided response.' : ''),
-                req: Request::normalizeForLog($req)
+                req: Request::redactForLog($req)
             ),
             response: new ResponseInfo(
                 status: 200,

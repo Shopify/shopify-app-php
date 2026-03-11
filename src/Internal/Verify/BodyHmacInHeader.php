@@ -48,7 +48,7 @@ class BodyHmacInHeader
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.method to be a non-empty string',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -66,7 +66,7 @@ class BodyHmacInHeader
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.headers to be an object',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -84,7 +84,7 @@ class BodyHmacInHeader
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.body to be a string',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -105,7 +105,7 @@ class BodyHmacInHeader
                 log: new LogWithReq(
                     code: 'post_method_expected',
                     detail: "{$requestType} requests are expected to use the POST method. Respond 405 Method Not Allowed using the provided response.",
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 405,
@@ -129,7 +129,7 @@ class BodyHmacInHeader
                 log: new LogWithReq(
                     code: 'missing_hmac_header',
                     detail: "Required hmac header is missing. Respond 400 Bad Request using the provided response.",
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 400,
@@ -158,7 +158,7 @@ class BodyHmacInHeader
                 log: new LogWithReq(
                     code: 'invalid_hmac',
                     detail: "hmac header value does not match the body's HMAC. Respond 401 Unauthorized using the provided response.",
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -179,7 +179,7 @@ class BodyHmacInHeader
             log: new LogWithReq(
                 code: 'verified',
                 detail: "{$requestType} request verified successfully. Respond 200 OK using the provided response.",
-                req: Request::normalizeForLog($req)
+                req: Request::redactForLog($req)
             ),
             response: new ResponseInfo(
                 status: 200,

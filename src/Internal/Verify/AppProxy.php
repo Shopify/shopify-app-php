@@ -27,7 +27,7 @@ class AppProxy
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.url to be a non-empty string',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -77,7 +77,7 @@ class AppProxy
                 log: new LogWithReq(
                     code: 'missing_timestamp',
                     detail: 'Required `timestamp` query parameter is missing. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -97,7 +97,7 @@ class AppProxy
                 log: new LogWithReq(
                     code: 'invalid_timestamp',
                     detail: 'The `timestamp` query parameter is not a valid integer. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -119,7 +119,7 @@ class AppProxy
                 log: new LogWithReq(
                     code: 'timestamp_too_old',
                     detail: 'The `timestamp` query parameter is more than 90 seconds old. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -138,7 +138,7 @@ class AppProxy
                 log: new LogWithReq(
                     code: 'missing_signature',
                     detail: 'Required `signature` query parameter is missing. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -173,7 +173,7 @@ class AppProxy
                 log: new LogWithReq(
                     code: 'invalid_signature',
                     detail: '`signature` query parameter does not match the expected HMAC. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -200,7 +200,7 @@ class AppProxy
             log: new LogWithReq(
                 code: 'verified',
                 detail: 'App Proxy request verified successfully. Proceed with business logic.',
-                req: Request::normalizeForLog($req)
+                req: Request::redactForLog($req)
             ),
             response: new ResponseInfo(
                 status: 200,

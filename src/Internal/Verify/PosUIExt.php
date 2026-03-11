@@ -34,7 +34,7 @@ class PosUIExt
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.method to be a non-empty string',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -55,7 +55,7 @@ class PosUIExt
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.headers to be an object',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -76,7 +76,7 @@ class PosUIExt
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.url to be a non-empty string',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -107,7 +107,7 @@ class PosUIExt
                     log: new LogWithReq(
                         code: 'options_request',
                         detail: 'OPTIONS request handled for CORS preflight. Respond 204 No Content using the provided response.',
-                        req: Request::normalizeForLog($req)
+                        req: Request::redactForLog($req)
                     ),
                     response: new ResponseInfo(
                         status: 204,
@@ -134,7 +134,7 @@ class PosUIExt
                 log: new LogWithReq(
                     code: 'missing_authorization_header',
                     detail: 'Required `Authorization` header is missing. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -156,7 +156,7 @@ class PosUIExt
                 log: new LogWithReq(
                     code: 'invalid_id_token',
                     detail: 'ID token verification failed. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -210,7 +210,7 @@ class PosUIExt
                 log: new LogWithReq(
                     code: $errorCode,
                     detail: $detailMsg,
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -232,7 +232,7 @@ class PosUIExt
                 log: new LogWithReq(
                     code: 'invalid_aud',
                     detail: 'ID token audience (aud) claim does not match clientId. Respond 401 Unauthorized using the provided response.',
-                    req: Request::normalizeForLog($req)
+                    req: Request::redactForLog($req)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -265,7 +265,7 @@ class PosUIExt
             log: new LogWithReq(
                 code: 'verified',
                 detail: 'POS UI Extension request verified. Proceed with business logic.',
-                req: Request::normalizeForLog($req)
+                req: Request::redactForLog($req)
             ),
             response: new ResponseInfo(
                 status: 200,
