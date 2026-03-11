@@ -61,7 +61,7 @@ class AppHomeParentRedirect
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.headers to be an object',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -79,7 +79,7 @@ class AppHomeParentRedirect
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.url to be a non-empty string',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -100,7 +100,7 @@ class AppHomeParentRedirect
                 log: new LogWithReq(
                     code: 'invalid_target',
                     detail: "Target must be '_top' or '_blank'. Received {$target}. Respond 400 Bad Request using the provided response.",
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 400,
@@ -120,7 +120,7 @@ class AppHomeParentRedirect
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Redirect URL must use http or https scheme',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -148,7 +148,7 @@ class AppHomeParentRedirect
                 log: new LogWithReq(
                     code: 'app_home_parent_redirect_success',
                     detail: 'App Home Parent Redirect response constructed. Respond with the provided response to redirect outside the app iframe.',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 401,
@@ -175,7 +175,7 @@ class AppHomeParentRedirect
             log: new LogWithReq(
                 code: 'app_home_parent_redirect_success',
                 detail: 'App Home Parent Redirect response constructed. Respond with the provided response to redirect outside the app iframe.',
-                req: Request::normalizeForLog($request)
+                req: Request::redactForLog($request)
             ),
             response: new ResponseInfo(
                 status: 200,

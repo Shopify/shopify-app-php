@@ -46,7 +46,7 @@ class AppHomeRedirect
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.headers to be an object',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -64,7 +64,7 @@ class AppHomeRedirect
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.url to be a non-empty string',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 500,
@@ -82,7 +82,7 @@ class AppHomeRedirect
                 log: new LogWithReq(
                     code: 'invalid_redirect_url',
                     detail: "Redirect URL must be a relative path starting with '/'. Received {$redirectUrl}. Respond 400 Bad Request using the provided response.",
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 400,
@@ -116,7 +116,7 @@ class AppHomeRedirect
                 log: new LogWithReq(
                     code: 'app_home_redirect_success',
                     detail: 'App Home Redirect response constructed. Respond with the provided response to redirect within the app.',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 200,
@@ -138,7 +138,7 @@ class AppHomeRedirect
                 log: new LogWithReq(
                     code: 'app_home_redirect_success',
                     detail: 'App Home Redirect response constructed. Respond with the provided response to redirect within the app.',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 302,
@@ -157,7 +157,7 @@ class AppHomeRedirect
             log: new LogWithReq(
                 code: 'app_home_redirect_success',
                 detail: 'App Home Redirect response constructed. Respond with the provided response to redirect within the app.',
-                req: Request::normalizeForLog($request)
+                req: Request::redactForLog($request)
             ),
             response: new ResponseInfo(
                 status: 302,

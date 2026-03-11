@@ -80,7 +80,7 @@ class AppHomePatchIdToken
                 log: new LogWithReq(
                     code: 'missing_shop',
                     detail: 'Shop parameter is required in request URL query string but was not provided. Respond 400 Bad Request using the provided response.',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 400,
@@ -98,7 +98,7 @@ class AppHomePatchIdToken
                 log: new LogWithReq(
                     code: 'missing_shopify_reload',
                     detail: 'shopify-reload parameter is required in request URL query string but was not provided. Respond 400 Bad Request using the provided response.',
-                    req: Request::normalizeForLog($request)
+                    req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
                     status: 400,
@@ -117,7 +117,7 @@ class AppHomePatchIdToken
             log: new LogWithReq(
                 code: 'patch_id_token_page_success',
                 detail: 'App Home Patch ID Token page Response constructed. Respond with the provided response and App Bridge will obtain an id token.',
-                req: Request::normalizeForLog($request)
+                req: Request::redactForLog($request)
             ),
             response: new ResponseInfo(
                 status: 200,

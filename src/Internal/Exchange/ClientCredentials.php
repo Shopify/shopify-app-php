@@ -79,12 +79,12 @@ class ClientCredentials
             'Accept' => 'application/json',
             'User-Agent' => \Shopify\App\Internal\Utils\UserAgent::get()
         ];
-        $reqObj = [
+        $reqObj = \Shopify\App\Internal\Utils\Request::redactForLog([
             'method' => 'POST',
             'url' => $tokenEndpoint,
             'headers' => $requestHeaders,
             'body' => json_encode($requestBody)
-        ];
+        ]);
 
         // Use injected client or create default one
         $client = $httpClient !== null ? $httpClient : new Client();

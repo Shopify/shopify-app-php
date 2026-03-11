@@ -173,12 +173,12 @@ class RefreshToken
                 }
 
                 // Build request/response objects for httpLogs
-                $reqLog = [
+                $reqLog = \Shopify\App\Internal\Utils\Request::redactForLog([
                     'url' => $tokenEndpoint,
                     'method' => 'POST',
                     'headers' => $requestHeaders,
-                    'body' => ''  // Don't log sensitive body
-                ];
+                    'body' => json_encode($requestBody)
+                ]);
                 $resLog = [
                     'status' => $statusCode,
                     'headers' => $responseHeaders,
@@ -229,12 +229,12 @@ class RefreshToken
                 // Handle error responses
                 return self::handleErrorResponse($responseData, $shop, $httpLogs, $reqLog, $resLog);
             } catch (RequestException $e) {
-                $reqLog = [
+                $reqLog = \Shopify\App\Internal\Utils\Request::redactForLog([
                     'url' => $tokenEndpoint,
                     'method' => 'POST',
                     'headers' => $requestHeaders,
-                    'body' => ''
-                ];
+                    'body' => json_encode($requestBody)
+                ]);
                 $resLog = [
                     'status' => 0,
                     'headers' => (object)[],

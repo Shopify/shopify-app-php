@@ -104,12 +104,12 @@ class AdminGraphQL
                     $responseHeaders[$name] = implode(', ', $values);
                 }
 
-                $req = [
+                $req = \Shopify\App\Internal\Utils\Request::redactForLog([
                     'url' => $endpoint,
                     'method' => 'POST',
                     'headers' => $requestHeaders,
                     'body' => json_encode($requestBody),
-                ];
+                ]);
 
                 $res = [
                     'status' => $statusCode,
@@ -350,12 +350,12 @@ class AdminGraphQL
                         [
                             'code' => 'network_error',
                             'detail' => 'Network error occurred during GraphQL request',
-                            'req' => [
+                            'req' => \Shopify\App\Internal\Utils\Request::redactForLog([
                                 'url' => $endpoint,
                                 'method' => 'POST',
                                 'headers' => $requestHeaders,
                                 'body' => json_encode($requestBody),
-                            ],
+                            ]),
                             'res' => [
                                 'status' => 0,
                                 'body' => '',
