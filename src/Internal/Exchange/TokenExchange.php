@@ -23,6 +23,7 @@ class TokenExchange
         string $accessMode,
         IdToken|array|null $idToken,  // ← Union type: accept IdToken object OR array
         ?array $invalidTokenResponse = null,
+        bool $expiring = true,
         $httpClient = null,
         array $appConfig = []
     ): TokenExchangeResult {
@@ -75,6 +76,25 @@ class TokenExchange
                 log: new Log(
                     code: 'configuration_error',
                     detail: "Expected access mode to be 'online' or 'offline', but got '{$accessMode}'"
+                ),
+                httpLogs: [],
+                response: new ResponseInfo(
+                    status: 500,
+                    body: '',
+                    headers: (object)[]
+                )
+            );
+        }
+
+        // Validate expiring + access mode combination
+        if (!$expiring && $accessMode === 'online') {
+            return new TokenExchangeResult(
+                ok: false,
+                shop: null,
+                accessToken: null,
+                log: new Log(
+                    code: 'configuration_error',
+                    detail: 'The expiring parameter is only applicable to offline access tokens. Online tokens always expire.'
                 ),
                 httpLogs: [],
                 response: new ResponseInfo(
@@ -224,7 +244,7 @@ class TokenExchange
             'subject_token' => $jwtString,
             'subject_token_type' => 'urn:ietf:params:oauth:token-type:id_token',
             'requested_token_type' => $requestedTokenType,
-            'expiring' => 1
+            'expiring' => $expiring ? 1 : 0
         ];
 
         $tokenEndpoint = "{$shopUrl}/admin/oauth/access_token";
@@ -378,16 +398,17 @@ class TokenExchange
     private static function handleSuccessResponse(array $responseData, string $shop, string $accessMode, array $httpLogs): TokenExchangeResult
     {
         $accessToken = $responseData['access_token'] ?? '';
-        $expiresIn = $responseData['expires_in'] ?? null;
         $scope = $responseData['scope'] ?? '';
-        $refreshToken = $responseData['refresh_token'] ?? '';
-        $refreshTokenExpiresIn = $responseData['refresh_token_expires_in'] ?? null;
         $associatedUser = $responseData['associated_user'] ?? null;
         $associatedUserScope = $responseData['associated_user_scope'] ?? '';
 
-        // Calculate expiration timestamp (UTC)
-        // If expires_in is null or not provided, the token doesn't expire
+        $expiresIn = $responseData['expires_in'] ?? null;
+        $refreshTokenExpiresIn = $responseData['refresh_token_expires_in'] ?? null;
+
+        // Calculate expiration timestamps from response data.
+        // If expires_in is absent (e.g. non-expiring offline tokens), expires will be null.
         $expires = $expiresIn !== null ? gmdate('Y-m-d\TH:i:s\Z', time() + $expiresIn) : null;
+        $refreshToken = $responseData['refresh_token'] ?? null;
         $refreshTokenExpires = $refreshTokenExpiresIn !== null
             ? gmdate('Y-m-d\TH:i:s\Z', time() + $refreshTokenExpiresIn)
             : null;

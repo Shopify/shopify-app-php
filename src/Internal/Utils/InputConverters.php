@@ -63,7 +63,7 @@ class InputConverters
             token: $input['token'],
             expires: $input['expires'] ?? null,
             scope: $input['scope'],
-            refreshToken: $input['refreshToken'],
+            refreshToken: $input['refreshToken'] ?? null,
             refreshTokenExpires: $input['refreshTokenExpires'] ?? null,
             user: $input['user'] ?? null,
         );

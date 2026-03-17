@@ -112,6 +112,24 @@ class RefreshToken
             );
         }
 
+        if ($refreshToken === null) {
+            return new TokenExchangeResult(
+                ok: false,
+                shop: null,
+                accessToken: null,
+                log: new Log(
+                    code: 'configuration_error',
+                    detail: 'Non-expiring access tokens cannot be refreshed.'
+                ),
+                httpLogs: [],
+                response: new ResponseInfo(
+                    status: 500,
+                    body: '',
+                    headers: (object)[]
+                )
+            );
+        }
+
         if (empty($refreshToken)) {
             return new TokenExchangeResult(
                 ok: false,
