@@ -16,7 +16,7 @@ readonly class TokenExchangeAccessToken
         public string $token,
         public ?string $expires,
         public string $scope,
-        public string $refreshToken,
+        public ?string $refreshToken,
         public ?string $refreshTokenExpires,
         public ?array $user,
     ) {

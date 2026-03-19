@@ -113,12 +113,14 @@ class ShopifyApp
         string $accessMode,
         IdToken|array|null $idToken,
         ?array $invalidTokenResponse = null,
+        bool $expiring = true,
         $httpClient = null
     ): TokenExchangeResult {
         return TokenExchange::exchange(
             accessMode: $accessMode,
             idToken: $idToken,
             invalidTokenResponse: $invalidTokenResponse,
+            expiring: $expiring,
             httpClient: $httpClient,
             appConfig: $this->config
         );

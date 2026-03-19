@@ -4,4 +4,4 @@ declare(strict_types=1);
 
 namespace Shopify\App;
 
-const VERSION = '0.1.3';
+const VERSION = '0.1.4';
