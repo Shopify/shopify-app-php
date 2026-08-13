@@ -53,6 +53,26 @@ class RefreshToken
             }
         }
 
+        // A non-expiring token has no expiry and no refresh token; it never needs refreshing.
+        // (An expiring token that still has a refresh token must fall through and refresh.)
+        if (empty($expires) && empty($refreshToken)) {
+            return new TokenExchangeResult(
+                ok: true,
+                shop: $shop,
+                accessToken: null,
+                log: new Log(
+                    code: 'non_expiring_no_refresh_needed',
+                    detail: 'Access token does not expire, so no refresh is needed. Proceed with business logic.'
+                ),
+                httpLogs: [],
+                response: new ResponseInfo(
+                    status: 200,
+                    body: '',
+                    headers: (object)[]
+                )
+            );
+        }
+
         // Check if access token is still valid (with 60-second buffer)
         if (!empty($expires)) {
             $expiryTime = strtotime($expires);

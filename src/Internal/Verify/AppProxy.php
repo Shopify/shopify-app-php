@@ -49,23 +49,52 @@ class AppProxy
         if ($queryString !== '') {
             $pairs = explode('&', $queryString);
             foreach ($pairs as $pair) {
+                if ($pair === '') {
+                    continue;
+                }
+
+                // Bare params without "=" (e.g. a second `&shop`) are kept as
+                // empty-valued params so that duplicate keys are still detected,
+                // matching parse_qs(keep_blank_values=True) in the Python package.
                 if (strpos($pair, '=') !== false) {
                     [$key, $value] = explode('=', $pair, 2);
                     $key = urldecode($key);
                     $value = urldecode($value);
+                } else {
+                    $key = urldecode($pair);
+                    $value = '';
+                }
 
-                    // Check if this key already exists (for multiple values with same key)
-                    if (isset($params[$key])) {
-                        // Convert to array if not already
-                        if (!is_array($params[$key])) {
-                            $params[$key] = [$params[$key]];
-                        }
-                        $params[$key][] = $value;
-                    } else {
-                        $params[$key] = $value;
+                // Check if this key already exists (for multiple values with same key)
+                if (isset($params[$key])) {
+                    // Convert to array if not already
+                    if (!is_array($params[$key])) {
+                        $params[$key] = [$params[$key]];
                     }
+                    $params[$key][] = $value;
+                } else {
+                    $params[$key] = $value;
                 }
             }
+        }
+
+        // Reject requests with multiple shop URL params
+        if (isset($params['shop']) && is_array($params['shop'])) {
+            return new ResultWithLoggedInCustomerId(
+                ok: false,
+                shop: null,
+                loggedInCustomerId: null,
+                log: new LogWithReq(
+                    code: 'multiple_shop_parameters',
+                    detail: 'Request has multiple `shop` query parameters. Respond 401 Unauthorized using the provided response.',
+                    req: Request::redactForLog($req)
+                ),
+                response: new ResponseInfo(
+                    status: 401,
+                    body: 'Unauthorized',
+                    headers: (object)[]
+                )
+            );
         }
 
         // Check for missing timestamp

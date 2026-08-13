@@ -189,6 +189,12 @@ class AppHomeRedirect
             return false;
         }
 
+        // Must not be backslash-prefixed (/\evil.com) — browsers normalize \ to /
+        // per the WHATWG URL Standard, turning it into a protocol-relative URL
+        if (strlen($redirectUrl) > 1 && $redirectUrl[1] === '\\') {
+            return false;
+        }
+
         return true;
     }
 

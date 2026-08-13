@@ -209,30 +209,38 @@ class TokenExchange
             );
         }
 
-        // Validate shop URL format (basic validation)
-        if (strpos($shop, '.myshopify.com') === false) {
-            return new TokenExchangeResult(
-                ok: false,
-                shop: null,
-                accessToken: null,
-                log: new Log(
-                    code: 'configuration_error',
-                    detail: "Expected idToken.claims.dest to be a valid shop URL (e.g., 'https://shop.myshopify.com' or 'shop.myshopify.com')"
-                ),
-                httpLogs: [],
-                response: new ResponseInfo(
-                    status: 500,
-                    body: '',
-                    headers: (object)[]
-                )
-            );
+        // Validate shop URL format - dest must end with .myshopify.com
+        $shopWithoutProtocol = preg_replace('#^https?://#', '', $shop);
+        $invalidShopError = new TokenExchangeResult(
+            ok: false,
+            shop: null,
+            accessToken: null,
+            log: new Log(
+                code: 'configuration_error',
+                detail: "Expected idToken.claims.dest to be a valid shop URL (e.g., 'https://shop.myshopify.com' or 'shop.myshopify.com')"
+            ),
+            httpLogs: [],
+            response: new ResponseInfo(
+                status: 500,
+                body: '',
+                headers: (object)[]
+            )
+        );
+
+        if (!str_ends_with($shopWithoutProtocol, '.myshopify.com')) {
+            return $invalidShopError;
+        }
+
+        // Extract shop name by removing .myshopify.com suffix
+        $shopName = substr($shopWithoutProtocol, 0, -strlen('.myshopify.com'));
+
+        // Validate the extracted shop name against allowed pattern
+        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-]*$/', $shopName)) {
+            return $invalidShopError;
         }
 
         // Normalize shop URL for API request
-        $shopUrl = (strpos($shop, 'https://') === 0) ? $shop : 'https://' . $shop;
-
-        // Extract shop name (remove https:// and .myshopify.com)
-        $shopName = str_replace(['https://', 'http://', '.myshopify.com'], '', $shop);
+        $shopUrl = 'https://' . $shopWithoutProtocol;
 
         // Step 2: Make the Token Exchange Request
         $requestedTokenType = "urn:shopify:params:oauth:token-type:{$accessMode}-access-token";
