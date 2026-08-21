@@ -15,7 +15,7 @@ readonly class ResultWithExchangeableIdToken
         public ?string $shop,
         public ?IdToken $idToken,
         public ?string $userId,
-        public ?array $newIdTokenResponse,
+        public ?array $invalidTokenResponse,
         public LogWithReq $log,
         public ResponseInfo $response,
     ) {

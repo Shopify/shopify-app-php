@@ -21,7 +21,7 @@
   "require": {
     "php": ">=8.2",
     "firebase/php-jwt": "^7.0",
-    "guzzlehttp/guzzle": "^7.0"
+    "guzzlehttp/guzzle": "^7.0 || ^8.0"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "^3.13"
