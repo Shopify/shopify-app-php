@@ -63,7 +63,7 @@ class AppHomeReq
             shop: null,
             idToken: null,
             userId: null,
-            newIdTokenResponse: null,
+            invalidTokenResponse: null,
             log: new LogWithReq(
                 code: 'redirect_to_patch_id_token_page',
                 detail: 'Embedded app without id_token. Redirect to the patch ID token page to obtain a new token using the provided response.',
@@ -86,7 +86,7 @@ class AppHomeReq
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected appHomePatchIdTokenPath to be a non-empty string',
@@ -106,7 +106,7 @@ class AppHomeReq
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: "Expected appHomePatchIdTokenPath to be a non-empty string, but got ''",
@@ -128,7 +128,7 @@ class AppHomeReq
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.url to be a non-empty string',
@@ -149,7 +149,7 @@ class AppHomeReq
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.headers to be an object',
@@ -201,7 +201,7 @@ class AppHomeReq
                     shop: null,
                     idToken: null,
                     userId: null,
-                    newIdTokenResponse: null,
+                    invalidTokenResponse: null,
                     log: new LogWithReq(
                         code: 'invalid_id_token',
                         detail: 'ID token verification failed. Respond 401 Unauthorized using the provided response.',
@@ -225,7 +225,7 @@ class AppHomeReq
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'missing_authorization_and_id_token',
                     detail: 'Neither Authorization header nor id_token query parameter present. Respond 401 Unauthorized using the provided response.',
@@ -280,7 +280,7 @@ class AppHomeReq
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: $errorCode,
                     detail: $detailMsg,
@@ -312,7 +312,7 @@ class AppHomeReq
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'invalid_aud',
                     detail: 'ID token audience (aud) claim does not match clientId. Respond 401 Unauthorized using the provided response.',
@@ -343,8 +343,8 @@ class AppHomeReq
             ];
         }
 
-        // Build newIdTokenResponse
-        $newIdTokenResponse = null;
+        // Build invalidTokenResponse
+        $invalidTokenResponse = null;
         if (!$hasAuthorizationHeader) {
             // Document request - build patch ID token URL
             $cleanQuery = self::removeQueryParam($query, 'id_token');
@@ -355,7 +355,7 @@ class AppHomeReq
 
             $patchIdTokenLocation = $urlParts['scheme'] . '://' . $urlParts['host'] . $appHomePatchIdTokenPath . '?' . $patchIdTokenQuery;
 
-            $newIdTokenResponse = [
+            $invalidTokenResponse = [
                 'status' => 302,
                 'body' => '',
                 'headers' => [
@@ -364,7 +364,7 @@ class AppHomeReq
             ];
         } else {
             // Fetch request
-            $newIdTokenResponse = [
+            $invalidTokenResponse = [
                 'status' => 401,
                 'body' => '',
                 'headers' => [
@@ -382,7 +382,7 @@ class AppHomeReq
                 claims: $payload
             ),
             userId: $userId,
-            newIdTokenResponse: $newIdTokenResponse,
+            invalidTokenResponse: $invalidTokenResponse,
             log: new LogWithReq(
                 code: 'verified',
                 detail: 'App Home request verified. Proceed with business logic.' . (!$hasAuthorizationHeader ? '  Include the headers in the provided response.' : ''),

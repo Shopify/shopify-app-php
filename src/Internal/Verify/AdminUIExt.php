@@ -30,7 +30,7 @@ class AdminUIExt
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.method to be a non-empty string',
@@ -51,7 +51,7 @@ class AdminUIExt
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.headers to be an object',
@@ -72,7 +72,7 @@ class AdminUIExt
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'configuration_error',
                     detail: 'Expected request.url to be a non-empty string',
@@ -103,7 +103,7 @@ class AdminUIExt
                     shop: null,
                     idToken: null,
                     userId: null,
-                    newIdTokenResponse: null,
+                    invalidTokenResponse: null,
                     log: new LogWithReq(
                         code: 'options_request',
                         detail: 'OPTIONS request handled for CORS preflight. Respond 204 No Content using the provided response.',
@@ -130,7 +130,7 @@ class AdminUIExt
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'missing_authorization_header',
                     detail: 'Required `Authorization` header is missing. Respond 401 Unauthorized using the provided response.',
@@ -152,7 +152,7 @@ class AdminUIExt
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'invalid_id_token',
                     detail: 'ID token verification failed. Respond 401 Unauthorized using the provided response.',
@@ -210,7 +210,7 @@ class AdminUIExt
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: $errorCode,
                     detail: $detailMsg,
@@ -234,7 +234,7 @@ class AdminUIExt
                 shop: null,
                 idToken: null,
                 userId: null,
-                newIdTokenResponse: null,
+                invalidTokenResponse: null,
                 log: new LogWithReq(
                     code: 'invalid_aud',
                     detail: 'ID token audience (aud) claim does not match clientId. Respond 401 Unauthorized using the provided response.',
@@ -266,7 +266,7 @@ class AdminUIExt
                 claims: $payload
             ),
             userId: $userId,
-            newIdTokenResponse: [
+            invalidTokenResponse: [
                 'status' => 401,
                 'body' => '',
                 'headers' => [

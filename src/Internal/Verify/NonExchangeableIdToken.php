@@ -215,7 +215,7 @@ class NonExchangeableIdToken
 
         // Extract shop from dest claim
         $dest = $payload['dest'] ?? '';
-        $shop = str_replace('.myshopify.com', '', $dest);
+        $shop = str_replace(['.myshopify.com', 'https://'], '', $dest);
 
         return new ResultWithNonExchangeableIdToken(
             ok: true,
