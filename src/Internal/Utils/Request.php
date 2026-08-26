@@ -11,7 +11,22 @@ namespace Shopify\App\Internal\Utils;
 class Request
 {
     private const REDACTED = '[REDACTED]';
-    private const SENSITIVE_BODY_FIELDS = ['client_secret', 'subject_token', 'refresh_token'];
+    private const SENSITIVE_BODY_FIELDS = [
+        'client_secret',
+        'subject_token',
+        'refresh_token',
+        'access_token',
+    ];
+    /**
+     * Fields an OAuth token endpoint returns that are reusable credentials. A
+     * debug log is a lower-trust sink than the app runtime, so these must never
+     * reach it.
+     */
+    private const SENSITIVE_RESPONSE_BODY_FIELDS = [
+        'access_token',
+        'refresh_token',
+        'client_secret',
+    ];
     private const SENSITIVE_HEADER_FIELDS = [
         'x-shopify-access-token',
         'authorization',
@@ -66,6 +81,47 @@ class Request
         }
 
         return $result;
+    }
+
+    /**
+     * Redact issued OAuth credentials from a response body before logging it.
+     *
+     * A 200 from the OAuth token endpoint carries the access_token and
+     * refresh_token that were just issued. Both are reusable credentials, so
+     * logging the response verbatim would let anyone with log access replay
+     * them. Every other field is preserved so the log stays useful for
+     * debugging.
+     *
+     * The body is only re-encoded when something was actually redacted, so a
+     * body that carries no credentials keeps its original formatting.
+     *
+     * @param string $body The raw response body
+     * @return string The response body safe for logging
+     */
+    public static function redactResponseBodyForLog(string $body): string
+    {
+        $parsed = json_decode($body, true);
+
+        if (!is_array($parsed)) {
+            return $body;
+        }
+
+        $modified = false;
+        foreach (self::SENSITIVE_RESPONSE_BODY_FIELDS as $field) {
+            if (array_key_exists($field, $parsed)) {
+                $parsed[$field] = self::REDACTED;
+                $modified = true;
+            }
+        }
+
+        if (!$modified) {
+            return $body;
+        }
+
+        $encoded = json_encode($parsed, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        // Fail closed: never fall back to the unredacted body.
+        return $encoded === false ? self::REDACTED : $encoded;
     }
 
     /**

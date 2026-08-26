@@ -101,7 +101,9 @@ class ClientCredentials
             $responseBody = (string) $response->getBody();
             $responseData = json_decode($responseBody, true);
 
-            // Build response object for logging
+            // Build response object for logging. The token endpoint response
+            // carries the newly issued access token, so redact it before this
+            // goes into a log.
             $responseHeaders = [];
             foreach ($response->getHeaders() as $name => $values) {
                 $responseHeaders[$name] = implode(', ', $values);
@@ -109,7 +111,7 @@ class ClientCredentials
             $resObj = [
                 'status' => $statusCode,
                 'headers' => empty($responseHeaders) ? (object)[] : $responseHeaders,
-                'body' => $responseBody
+                'body' => \Shopify\App\Internal\Utils\Request::redactResponseBodyForLog($responseBody)
             ];
 
             // Handle 200 success
