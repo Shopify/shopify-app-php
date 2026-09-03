@@ -81,7 +81,7 @@ class AppHomeRedirect
                 shop: $shop,
                 log: new LogWithReq(
                     code: 'invalid_redirect_url',
-                    detail: "Redirect URL must be a relative path starting with '/'. Received {$redirectUrl}. Respond 400 Bad Request using the provided response.",
+                    detail: 'Redirect URL was not a safe root-relative path. Respond 400 Bad Request using the provided response.',
                     req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
@@ -186,6 +186,12 @@ class AppHomeRedirect
 
         // Must not be protocol-relative (//evil.com)
         if (str_starts_with($redirectUrl, '//')) {
+            return false;
+        }
+
+        // Browsers remove tabs, line feeds, and carriage returns during URL
+        // preprocessing, which can turn an accepted URL into a protocol-relative URL
+        if (strpbrk($redirectUrl, "\t\n\r") !== false) {
             return false;
         }
 
