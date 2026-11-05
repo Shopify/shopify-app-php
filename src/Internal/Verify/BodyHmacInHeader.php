@@ -146,7 +146,7 @@ class BodyHmacInHeader
         $hmacValid = hash_equals($calculatedHmac, $receivedHmac);
 
         // If current secret fails and old secret is provided, try old secret
-        if (!$hmacValid && $oldClientSecret !== null) {
+        if (!$hmacValid && $oldClientSecret !== null && $oldClientSecret !== '') {
             $calculatedHmacOld = base64_encode(hash_hmac('sha256', $body, $oldClientSecret, true));
             $hmacValid = hash_equals($calculatedHmacOld, $receivedHmac);
         }

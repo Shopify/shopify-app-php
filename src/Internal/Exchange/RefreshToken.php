@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Shopify\App\Internal\Exchange;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
 use Shopify\App\Types\TokenExchangeResult;
 use Shopify\App\Types\TokenExchangeAccessToken;
 use Shopify\App\Types\Log;
 use Shopify\App\Internal\Utils\InputConverters;
+use Shopify\App\Internal\Utils\Shop;
 use Shopify\App\Types\ResponseInfo;
 
 /**
@@ -104,6 +105,24 @@ class RefreshToken
                 log: new Log(
                     code: 'configuration_error',
                     detail: "Expected shop to be a non-empty string, but got ''"
+                ),
+                httpLogs: [],
+                response: new ResponseInfo(
+                    status: 500,
+                    body: '',
+                    headers: (object)[]
+                )
+            );
+        }
+
+        if (!Shop::isValidShopName($shop)) {
+            return new TokenExchangeResult(
+                ok: false,
+                shop: null,
+                accessToken: null,
+                log: new Log(
+                    code: 'configuration_error',
+                    detail: "Expected shop to be a valid shop domain (e.g., 'shop-name')"
                 ),
                 httpLogs: [],
                 response: new ResponseInfo(
@@ -266,7 +285,7 @@ class RefreshToken
 
                 // Handle error responses
                 return self::handleErrorResponse($responseData, $shop, $httpLogs, $reqLog, $resLog);
-            } catch (RequestException $e) {
+            } catch (TransferException $e) {
                 $reqLog = \Shopify\App\Internal\Utils\Request::redactForLog([
                     'url' => $tokenEndpoint,
                     'method' => 'POST',

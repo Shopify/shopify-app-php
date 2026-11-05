@@ -189,7 +189,7 @@ class AppProxy
         $signatureValid = hash_equals($calculatedHmac, $receivedSignature);
 
         // If current secret fails and old secret is provided, try old secret
-        if (!$signatureValid && $oldClientSecret !== null) {
+        if (!$signatureValid && $oldClientSecret !== null && $oldClientSecret !== '') {
             $calculatedHmacOld = hash_hmac('sha256', $paramString, $oldClientSecret);
             $signatureValid = hash_equals($calculatedHmacOld, $receivedSignature);
         }

@@ -7,6 +7,7 @@ namespace Shopify\App\Internal\Verify;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Exception;
+use TypeError;
 use Shopify\App\Internal\Utils\Headers;
 use Shopify\App\Internal\Utils\Request;
 use Shopify\App\Types\ResultWithExchangeableIdToken;
@@ -173,7 +174,7 @@ class PosUIExt
         $verificationError = null;
 
         $secretsToTry = [];
-        if ($oldClientSecret !== null) {
+        if ($oldClientSecret !== null && $oldClientSecret !== '') {
             $secretsToTry[] = $oldClientSecret;
         }
         $secretsToTry[] = $clientSecret;
@@ -185,7 +186,7 @@ class PosUIExt
                 $payload = JWT::decode($idToken, new Key($secret, 'HS256'));
                 $payload = json_decode(json_encode($payload), true); // Convert to array
                 break; // Successfully decoded
-            } catch (Exception $e) {
+            } catch (Exception | TypeError $e) {
                 $verificationError = $e;
                 continue; // Try next secret
             }

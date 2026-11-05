@@ -65,7 +65,7 @@ class ShopifyApp
         $this->config = [
             'clientId' => $actualClientId,
             'clientSecret' => $actualClientSecret,
-            'oldClientSecret' => $actualOldClientSecret
+            'oldClientSecret' => $actualOldClientSecret === '' ? null : $actualOldClientSecret
         ];
     }
 
@@ -131,14 +131,22 @@ class ShopifyApp
         return RefreshToken::refresh($accessToken, $this->config, $httpClient);
     }
 
+    /**
+     * @param mixed $clientAssertion An app-created JWT, from
+     *        {@see ClientAssertion::create()} or any other signer. Omit it, or
+     *        pass null, to authenticate with the configured client secret.
+     *        Each request needs a freshly created assertion.
+     */
     public function exchangeUsingClientCredentials(
         string $shop,
-        $httpClient = null
+        $httpClient = null,
+        #[\SensitiveParameter] mixed $clientAssertion = null
     ): ClientCredentialsExchangeResult {
         return ClientCredentials::exchange(
             shop: $shop,
             httpClient: $httpClient,
-            appConfig: $this->config
+            appConfig: $this->config,
+            clientAssertion: $clientAssertion
         );
     }
 
