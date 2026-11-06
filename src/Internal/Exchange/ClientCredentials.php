@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Shopify\App\Internal\Exchange;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
+use Shopify\App\Internal\Utils\Shop;
 use Shopify\App\Types\ClientCredentialsExchangeResult;
 use Shopify\App\Types\ClientCredentialsAccessToken;
 use Shopify\App\Types\Log;
@@ -17,61 +18,75 @@ use Shopify\App\Types\ResponseInfo;
  */
 class ClientCredentials
 {
+    /** The only assertion type Shopify's token endpoint accepts. Not a caller option. */
+    private const ASSERTION_TYPE = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
+
+    /**
+     * Credentials that must never travel with a client assertion. Compared
+     * case-insensitively against the injected client's configured headers.
+     */
+    private const CONFLICTING_CREDENTIAL_HEADERS = ['authorization', 'x-shopify-access-token'];
+
+    /**
+     * @param mixed $clientAssertion An app-created JWT, or null to keep
+     *                               client-secret authentication.
+     */
     public static function exchange(
         string $shop,
         $httpClient = null,
-        array $appConfig = []
+        array $appConfig = [],
+        #[\SensitiveParameter] mixed $clientAssertion = null
     ): ClientCredentialsExchangeResult {
         $clientId = $appConfig['clientId'] ?? '';
         $clientSecret = $appConfig['clientSecret'] ?? '';
+        $usesAssertion = $clientAssertion !== null;
 
         // Validate shop parameter (check is_string before empty to catch type coercion)
         if (!is_string($shop) || empty($shop)) {
-            return new ClientCredentialsExchangeResult(
-                ok: false,
-                shop: null,
-                accessToken: null,
-                log: new Log(
-                    code: 'configuration_error',
-                    detail: "Expected shop to be a non-empty string, but got ''"
-                ),
-                httpLogs: [],
-                response: new ResponseInfo(
-                    status: 500,
-                    body: '',
-                    headers: (object)[]
-                )
-            );
+            return self::configurationError("Expected shop to be a non-empty string, but got ''");
         }
 
         // Validate shop format (alphanumeric and hyphens only)
-        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-]*$/', $shop)) {
-            return new ClientCredentialsExchangeResult(
-                ok: false,
-                shop: null,
-                accessToken: null,
-                log: new Log(
-                    code: 'configuration_error',
-                    detail: "Expected shop to be a valid shop domain (e.g., 'shop-name')"
-                ),
-                httpLogs: [],
-                response: new ResponseInfo(
-                    status: 500,
-                    body: '',
-                    headers: (object)[]
-                )
+        if (!Shop::isValidShopName($shop)) {
+            return self::configurationError(
+                "Expected shop to be a valid shop domain (e.g., 'shop-name')"
             );
         }
 
-        // Build the token endpoint URL
-        $tokenEndpoint = "https://{$shop}.myshopify.com/admin/oauth/access_token";
+        // A supplied assertion is opaque: it is never trimmed, decoded,
+        // inspected or re-signed, but it must be a usable string. An invalid
+        // one is an error, never a silent fallback to the client secret.
+        if ($usesAssertion && !(is_string($clientAssertion) && trim($clientAssertion) !== '')) {
+            return self::configurationError('Expected clientAssertion to be a non-empty string');
+        }
+
+        // Another credential on the shared client would authenticate this
+        // request twice. Fail before sending, and leave the client untouched.
+        if ($usesAssertion) {
+            $clientError = self::assertionClientError($httpClient);
+            if ($clientError !== null) {
+                return self::configurationError($clientError);
+            }
+        }
+
+        // Build the token endpoint URL. Assertion requests use the canonical
+        // lowercase host; the secret path keeps its existing URL construction.
+        $host = $usesAssertion ? strtolower($shop) : $shop;
+        $tokenEndpoint = "https://{$host}.myshopify.com/admin/oauth/access_token";
 
         // Build request body
-        $requestBody = [
-            'client_id' => $clientId,
-            'client_secret' => $clientSecret,
-            'grant_type' => 'client_credentials'
-        ];
+        $requestBody = $usesAssertion
+            ? [
+                'client_id' => $clientId,
+                'grant_type' => 'client_credentials',
+                'client_assertion_type' => self::ASSERTION_TYPE,
+                'client_assertion' => $clientAssertion
+            ]
+            : [
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+                'grant_type' => 'client_credentials'
+            ];
 
         // Build request object for logging
         $requestHeaders = [
@@ -90,12 +105,19 @@ class ClientCredentials
         $client = $httpClient !== null ? $httpClient : new Client();
         $httpLogs = [];
 
+        // Redirects can forward credentials. Assertion requests must also exclude other HTTP authentication.
+        $requestOptions = [
+            'headers' => $requestHeaders,
+            'json' => $requestBody,
+            'http_errors' => false,
+            'allow_redirects' => false
+        ];
+        if ($usesAssertion) {
+            $requestOptions['auth'] = null;
+        }
+
         try {
-            $response = $client->post($tokenEndpoint, [
-                'headers' => $requestHeaders,
-                'json' => $requestBody,
-                'http_errors' => false
-            ]);
+            $response = $client->post($tokenEndpoint, $requestOptions);
 
             $statusCode = $response->getStatusCode();
             $responseBody = (string) $response->getBody();
@@ -119,9 +141,12 @@ class ClientCredentials
                 return self::handleSuccessResponse($responseData, $shop, $httpLogs, $reqObj, $resObj);
             }
 
-            // Handle error responses
+            // Redirects and proxy errors may have empty or HTML bodies.
+            if (!is_array($responseData)) {
+                $responseData = [];
+            }
             return self::handleErrorResponse($responseData, $shop, $httpLogs, $reqObj, $resObj);
-        } catch (RequestException $e) {
+        } catch (TransferException $e) {
             $resObj = [
                 'status' => 0,
                 'headers' => (object)[],
@@ -149,6 +174,60 @@ class ClientCredentials
                 )
             );
         }
+    }
+
+    /**
+     * Build the existing configuration-error result. No HTTP request is made,
+     * so there are no HTTP logs, and the supplied value is never echoed.
+     */
+    private static function configurationError(string $detail): ClientCredentialsExchangeResult
+    {
+        return new ClientCredentialsExchangeResult(
+            ok: false,
+            shop: null,
+            accessToken: null,
+            log: new Log(
+                code: 'configuration_error',
+                detail: $detail
+            ),
+            httpLogs: [],
+            response: new ResponseInfo(
+                status: 500,
+                body: '',
+                headers: (object)[]
+            )
+        );
+    }
+
+    /**
+     * Guzzle 8 exposes getConfig() on Client, not ClientInterface. A wrapper
+     * cannot describe its delegate's defaults. Custom subclasses and middleware
+     * remain caller-controlled; this check establishes the supported API only.
+     */
+    private static function assertionClientError($httpClient): ?string
+    {
+        if ($httpClient === null) {
+            return null;
+        }
+        if (!$httpClient instanceof Client) {
+            return 'Client assertion requests require an inspectable HTTP client';
+        }
+
+        $headers = $httpClient->getConfig('headers') ?? [];
+        if (!is_array($headers)) {
+            return 'Client assertion requests require an inspectable HTTP client';
+        }
+        foreach (array_keys($headers) as $name) {
+            if (in_array(strtolower((string)$name), self::CONFLICTING_CREDENTIAL_HEADERS, true)) {
+                return 'Client assertion requests must not include other authentication credentials';
+            }
+        }
+
+        $query = $httpClient->getConfig('query');
+        if ($query !== null && $query !== '' && $query !== []) {
+            return 'Client assertion requests must use the unmodified shop token endpoint';
+        }
+        return null;
     }
 
     private static function handleSuccessResponse(array $responseData, string $shop, array $httpLogs, array $reqObj, array $resObj): ClientCredentialsExchangeResult

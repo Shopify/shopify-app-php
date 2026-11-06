@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Shopify\App\Internal\Exchange;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
 use Shopify\App\Types\TokenExchangeResult;
 use Shopify\App\Types\TokenExchangeAccessToken;
 use Shopify\App\Types\IdToken;
 use Shopify\App\Types\Log;
 use Shopify\App\Internal\Utils\InputConverters;
+use Shopify\App\Internal\Utils\Shop;
 use Shopify\App\Types\ResponseInfo;
 
 /**
@@ -227,20 +228,12 @@ class TokenExchange
             )
         );
 
-        if (!str_ends_with($shopWithoutProtocol, '.myshopify.com')) {
+        if (!Shop::isValidShopDomain($shopWithoutProtocol)) {
             return $invalidShopError;
         }
 
-        // Extract shop name by removing .myshopify.com suffix
         $shopName = substr($shopWithoutProtocol, 0, -strlen('.myshopify.com'));
-
-        // Validate the extracted shop name against allowed pattern
-        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-]*$/', $shopName)) {
-            return $invalidShopError;
-        }
-
-        // Normalize shop URL for API request
-        $shopUrl = 'https://' . $shopWithoutProtocol;
+        $shopUrl = 'https://' . $shopName . '.myshopify.com';
 
         // Step 2: Make the Token Exchange Request
         $requestedTokenType = "urn:shopify:params:oauth:token-type:{$accessMode}-access-token";
@@ -357,7 +350,7 @@ class TokenExchange
 
                 // Handle error responses
                 return self::handleErrorResponse($responseData, $shopName, $invalidTokenResponse, $httpLogs, $reqObj, $resObj);
-            } catch (RequestException $e) {
+            } catch (TransferException $e) {
                 $resObj = [
                     'status' => 0,
                     'headers' => (object)[],

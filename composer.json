@@ -21,10 +21,10 @@
   "require": {
     "php": ">=8.2",
     "firebase/php-jwt": "^7.0",
-    "guzzlehttp/guzzle": "^7.0 || ^8.0"
+    "guzzlehttp/guzzle": "^7.15.2 || ^8.0.1"
   },
   "require-dev": {
-    "squizlabs/php_codesniffer": "^3.13"
+    "squizlabs/php_codesniffer": "^3.13.6"
   },
   "scripts": {
     "lint": "./vendor/bin/phpcs --standard=PSR12 src",

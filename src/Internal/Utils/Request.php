@@ -16,6 +16,7 @@ class Request
         'subject_token',
         'refresh_token',
         'access_token',
+        'client_assertion',
     ];
     /**
      * Fields an OAuth token endpoint returns that are reusable credentials. A

@@ -24,6 +24,7 @@ This package encodes the secure, correct way to build a Shopify app. Most of wha
   - [Verifying requests with exchangeable ID tokens](#verifying-requests-with-exchangeable-id-tokens)
   - [Navigating inside and outside the App Home iframe](#navigating-inside-and-outside-the-app-home-iframe)
   - [GraphQL requests](#graphql-requests)
+  - [Optional access scopes](#optional-access-scopes)
   - [Verifying requests without exchangeable ID tokens](#verifying-requests-without-exchangeable-id-tokens)
   - [Getting access tokens with client credentials](#getting-access-tokens-with-client-credentials)
 - [Common misuses to avoid](#common-misuses-to-avoid)
@@ -68,8 +69,9 @@ Request Verification:
 Exchange:
 
 - `exchangeUsingTokenExchange`: Use Token Exchange to exchange an ID token for an access token
-- `exchangeUsingClientCredentials`: Get access tokens via client credentials
+- `exchangeUsingClientCredentials`: Get access tokens via client credentials, with your client secret or a client assertion
 - `refreshTokenExchangedAccessToken`: Refresh an access token that was created using Token Exchange. Checks if a token refresh can and should happen.
+- `ClientAssertion::create`: Sign one client assertion JWT with your own private key, for a client credentials request that does not use your client secret
 
 GraphQL:
 
@@ -779,6 +781,14 @@ function processJob($shop)
 - `data`: The GraphQL response data, or `null` if the request failed.
 - `extensions`: The GraphQL extensions (e.g., cost information), or `null` if not present.
 
+### Optional access scopes
+
+Use [`adminGraphQLRequest`](#graphql-requests) on your server to query granted scopes or revoke optional scopes. Check the revoke mutation's `userErrors` even when the package result is `ok`.
+
+To request merchant approval, use App Bridge in embedded apps or Shopify's approval redirect in standalone apps.
+
+See [Manage access scopes](https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes) for configuration, deployment, examples, and grant rules.
+
 ### Verifying requests without exchangeable ID tokens
 
 The following requests do not provide the required information for token exchange:
@@ -889,10 +899,66 @@ The `accessToken` object contains:
 | `accessMode` | Always "offline"                                    |
 | `token`      | The access token string                             |
 | `scope`      | The granted scopes                                  |
-| `expires`    | ISO 8601 datetime when the token expires (24 hours) |
+| `expires`    | ISO 8601 expiry calculated from the endpoint response |
 | `user`       | Always `null` for client credentials                |
 
-Note: Client credentials tokens expire after 24 hours and do not include a refresh token. When the token expires, request a new one using `exchangeUsingClientCredentials` with the same credentials.
+Client credentials tokens do not include a refresh token. Read `expires` from the result rather than assuming a fixed lifetime. When it expires, call `exchangeUsingClientCredentials` again. An assertion-authenticated call always needs a fresh assertion.
+
+This method does not follow redirects with either authentication method, even if an injected client enables them. A 307/308 can forward the credential-bearing POST body. Redirects return a failed result using the existing error-code rules, with the original status in the HTTP log. The per-request setting leaves the client configuration and other operations unchanged.
+
+> **Upgrade note.** Client-secret requests now override redirect-enabled client defaults. Check the shop and intended endpoint instead of relying on a redirect.
+
+#### Authenticating with a client assertion
+
+Instead of your client secret, you can authenticate a client credentials request with a short-lived JWT that you sign with your own private key. Shopify verifies it against a public key you registered for the app. Your app must already be installed on the shop: registering a key does not install it, and does not add scopes. To create a key pair and register its public key, see [Get application-only access tokens](https://shopify.dev/docs/apps/build/authentication-authorization/application-only-access-tokens).
+
+`clientAssertion` is an argument to one call, not an app-wide setting. Omit it, or pass `null`, and the request keeps using your client secret. Keep the real client secret in the existing app configuration; only this request omits it.
+
+```php
+use Shopify\App\ClientAssertion;
+
+function getAccessTokenWithAssertion($shop, \OpenSSLAsymmetricKey $privateKey, string $registeredKeyId)
+{
+    $shopify = getShopifyApp();
+
+    // Create a fresh assertion for every request attempt.
+    $assertion = ClientAssertion::create(
+        shop: $shop,
+        clientId: getenv('SHOPIFY_CLIENT_ID'),
+        kid: $registeredKeyId,
+        privateKey: $privateKey,
+    );
+
+    $result = $shopify->exchangeUsingClientCredentials(shop: $shop, clientAssertion: $assertion);
+
+    if (!$result->ok) {
+        error_log("{$result->log->code} - {$result->log->detail}");
+        return null;
+    }
+
+    return $result->accessToken;
+}
+```
+
+`ClientAssertion::create` takes:
+
+| Argument          | Description                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| `shop`            | The shop name (e.g., "test-shop"), not a domain or URL                                                  |
+| `clientId`        | Your app's client ID                                                                                     |
+| `kid`             | The identifier you registered for the public key                                                         |
+| `privateKey`      | A native `OpenSSLAsymmetricKey`: an RSA private key of 2048 bits or more (`RS256`), or an EC P-256 private key (`ES256`) |
+| `lifetimeSeconds` | Optional. An integer from 1 to 300. Defaults to 60                                                       |
+
+It returns the complete JWT string, or throws `InvalidArgumentException` for an invalid input or unsupported key, and `RuntimeException` when signing fails. It makes no HTTP request, and never logs or returns your key.
+
+Things to know:
+
+- **One assertion, one attempt.** An assertion authenticates once. Create a new one for every attempt, including after a timeout, a `503`, or any other failure. The package makes a single attempt per call and does not fall back to your client secret when an assertion request fails. Redirects are not followed on either authentication path.
+- **The key stays yours.** Supply an already-loaded native private key. The package does not import, generate, store, rotate, or register keys. If you sign with a KMS or another remote signer, skip `ClientAssertion::create` and pass your own completed JWT to `clientAssertion`.
+- **No other credentials.** An assertion request must not carry an `Authorization` or `X-Shopify-Access-Token` header. If the Guzzle client you inject has one configured, the call returns a configuration error instead of sending the request.
+- **Inspectable client defaults.** Assertion requests require a Guzzle `Client`, because that is the supported API for reading a client's configured defaults, and they reject nonempty default query parameters. A wrapper that only implements `ClientInterface` is refused: it reports its own defaults, not those of the client it delegates to. The package does not change those defaults. Custom middleware and transports must honor the per-request authentication and redirect controls and must not add retries.
+- **The endpoint decides the token lifetime.** Read `expires` from the result. Assertion-authenticated grants for new public apps currently return a one-hour token and no refresh token, which is not the same as the assertion's own lifetime.
 
 ## Common misuses to avoid
 

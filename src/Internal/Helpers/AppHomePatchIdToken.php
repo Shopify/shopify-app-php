@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopify\App\Internal\Helpers;
 
 use Shopify\App\Internal\Utils\Request;
+use Shopify\App\Internal\Utils\Shop;
 use Shopify\App\Types\AppHomePatchIdTokenResult;
 use Shopify\App\Types\LogWithReq;
 use Shopify\App\Types\ResponseInfo;
@@ -80,6 +81,23 @@ class AppHomePatchIdToken
                 log: new LogWithReq(
                     code: 'missing_shop',
                     detail: 'Shop parameter is required in request URL query string but was not provided. Respond 400 Bad Request using the provided response.',
+                    req: Request::redactForLog($request)
+                ),
+                response: new ResponseInfo(
+                    status: 400,
+                    body: 'Bad Request',
+                    headers: (object)[]
+                )
+            );
+        }
+
+        if (!Shop::isValidShopDomain($shop)) {
+            return new AppHomePatchIdTokenResult(
+                ok: false,
+                shop: null,
+                log: new LogWithReq(
+                    code: 'invalid_shop',
+                    detail: 'Shop parameter in request URL query string is not a valid shop domain. Respond 400 Bad Request using the provided response.',
                     req: Request::redactForLog($request)
                 ),
                 response: new ResponseInfo(
